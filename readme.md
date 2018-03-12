@@ -15,7 +15,7 @@ RewardHook is currently able to record the following accurately in each episode:
 - Collisions with pedestrians
 - Collisions with other objects / environment
 - Driving against traffic
-- Driving on paths
+- Driving on sidewalks
 
 ## Getting Started
 
