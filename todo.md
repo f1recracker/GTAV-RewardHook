@@ -3,12 +3,26 @@
 - Add configuration files to change parameters. Examples:
     - episode size in millis
 	- default events-to-rewards scheme
-	- auto start capture settings
-	- add ability to show / hide notifications
+	- auto starting capture
+    - default vehicle
+    - teleport after episode
+    - rng seed
+	- ability to show / hide in-game notifications
 - **[IMP]** Setup a RESTful server. Sample queries include:
 	- `/episode/{nearest_epoch}`
 	- `/reward/{nearest_epoch}` (using the default reward scheme)
 	- `/trainer/{start|stop}`
-	- `/trainer/configure`
-- Add simple examples (in python) that demonstrate the process of generating RL datasets using RewardHook
-- Add more events that can be used!
+    - `/trainer/teleport-random`
+    - `/trainer/teleport/area_name`
+    - `/trainer/teleport/{latitude_longitude}`
+    - `/trainer/p`
+	- `/trainer/configure/{prop_key}/{prop_value}`
+- Add sample examples (in python) that demonstrate the process of generating datasets
+- Add additional features for easy training:
+    - Teleport to random road / nearest road
+    - Spawn in some default vehicle
+    - Lose wanted level after each episode
+    - Fix vehicle after episodes
+    - Teleport after being submerged
+    - In-game controls for all trainer features
+- Add more events
