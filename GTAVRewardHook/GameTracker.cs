@@ -254,7 +254,7 @@ namespace GTAVRewardHook
 
         public void Tick(object sender, EventArgs args){
             var character = Game.Player.Character;
-            alignedVehicles.RemoveWhere(ped => ped.Position.DistanceTo(character.Position) > 30);
+            alignedVehicles.RemoveWhere(ped => ped.Position.DistanceTo(character.Position) > 40);
             if (character.IsInVehicle())
             {
                 var pVehicle = character.CurrentVehicle;
@@ -268,8 +268,8 @@ namespace GTAVRewardHook
                 var vehicles = new List<Vehicle>(
                     World.GetNearbyVehicles(character.Position, 20))
                     .FindAll(vehicle => vehicle.Driver.Exists() || vehicle.Driver != character)
-                    .FindAll(vehicle => Vector3.Dot(Utils.Heading(pVehicle), Utils.Heading(vehicle)) >= Math.Cos(20))
-                    .FindAll(vehicle => Vector3.Dot(Utils.Heading(pVehicle), (pVehicle.Position - vehicle.Position).Normalized) > Math.Cos(60));
+                    .FindAll(vehicle => Vector3.Dot(Utils.Heading(pVehicle), Utils.Heading(vehicle)) >= Math.Cos(45))
+                    .FindAll(vehicle => Vector3.Dot(Utils.Heading(pVehicle), (pVehicle.Position - vehicle.Position).Normalized) > Math.Cos(90));
 
                 alignedVehicles.UnionWith(vehicles);
             }
