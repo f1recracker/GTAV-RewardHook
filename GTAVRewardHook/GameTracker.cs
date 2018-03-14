@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
+using System.Threading;
 using GTA;
 using GTA.Math;
 using GTA.Native;
@@ -16,6 +16,7 @@ namespace GTAVRewardHook
 
         private Stopwatch stopwatch;
         private GameEpisode currentEpisode;
+        private Thread serverThread;
 
         // Event trackers
         private List<IDrivingEventTracker> eventTrackers;
@@ -40,6 +41,9 @@ namespace GTAVRewardHook
                 {"avg_speed", new SpeedTracker(this)},
                 {"avg_road_alignment", new RoadAlignmentTracker(this)}
             };
+
+            serverThread = new Thread(new ThreadStart(Server.StartHost));
+            serverThread.Start();
 
             Tick += TrackEpisodeProgress;
 
