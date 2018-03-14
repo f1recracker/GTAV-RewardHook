@@ -32,6 +32,8 @@ namespace GTAVRewardHook
                 new TimeSinceEventTracker(this, Hash.GET_TIME_SINCE_PLAYER_HIT_PED,               DrivingEvent.HIT_PEDESTRIAN),
                 new TimeSinceEventTracker(this, Hash.GET_TIME_SINCE_PLAYER_HIT_VEHICLE,           DrivingEvent.HIT_VEHICLE),
                 new CollisionTracker(this),
+                // Experimental
+                new RanLightsTracker(this)
             };
             metricTrackers = new Dictionary<String, IDrivingMetricTracker>
             {
@@ -39,64 +41,11 @@ namespace GTAVRewardHook
                 {"avg_road_alignment", new RoadAlignmentTracker(this)}
             };
 
-            //Tick += Test;
             Tick += TrackEpisodeProgress;
 
             stopwatch = Stopwatch.StartNew();
             currentEpisode = new GameEpisode(0);
         }
-
-        // Dummy code for red-light detection
-        // It sort of works, but it depends if any other NPC is also parked
-
-        //private ISet<Ped> copyCats = new HashSet<Ped>();
-
-        //private void Test(object sender, EventArgs e)
-        //{
-        //    var pChar = Game.Player.Character;
-        //    var distantPeds = new HashSet<Ped>();
-        //    foreach (var copyCat in copyCats)
-        //    {
-        //        if (Vector3.Distance(copyCat.Position, pChar.Position) > 30)
-        //        {
-        //            copyCat.CurrentBlip.Remove();
-        //            distantPeds.Add(copyCat);
-        //        }
-        //    }
-        //    copyCats.ExceptWith(distantPeds);
-
-        //    if (pChar.IsInVehicle())
-        //    {
-        //        var pVehicle = pChar.CurrentVehicle;
-        //        var pPosition = pChar.CurrentVehicle.Position;
-        //        var pVelocity = (0.5f * pVehicle.Velocity.Normalized + 0.5f * pVehicle.ForwardVector.Normalized).Normalized;
-        //        foreach (var oVehicle in World.GetNearbyVehicles(pChar.Position, 20))
-        //        {
-        //            var oPosition = oVehicle.Position;
-        //            var oVelocty = (0.5f * oVehicle.Velocity.Normalized + 0.5f * oVehicle.ForwardVector.Normalized).Normalized;
-        //            if (oVehicle.Driver.Exists() && oVehicle.Driver != pChar && Vector3.Dot(oVelocty, pVelocity) > 0.7 && Vector3.Dot(pVelocity, (pPosition - oPosition).Normalized) > 0.5f && !copyCats.Contains(oVehicle.Driver))
-        //            {
-        //                copyCats.Add(oVehicle.Driver);
-        //                oVehicle.Driver.AddBlip();
-        //                var sequence = new TaskSequence();
-        //                sequence.AddTask.CruiseWithVehicle(pVehicle, pVehicle.Speed, 786603);
-        //                oVehicle.Driver.Task.PerformSequence(sequence);
-        //            }
-        //        }
-        //    }
-        //    var votes = 0;
-        //    foreach (var copyCat in copyCats)
-        //    {
-        //        Utils.DrawBox(copyCat.Position + new Vector3(0, 0, 2), 0.3f, Color.Cyan);
-        //        Utils.DrawLine(copyCat.Position, pChar.Position, Color.HotPink);
-        //        if (Function.Call<bool>(Hash.IS_VEHICLE_STOPPED_AT_TRAFFIC_LIGHTS, copyCat.CurrentVehicle))
-        //            votes += 1;
-        //    }
-        //    if (votes > 0.5f * copyCats.Count)
-        //    {
-        //        UI.ShowSubtitle("Running Red!");
-        //    }
-        //}
 
         void TrackEpisodeProgress(Object sender, EventArgs args)
         {
@@ -287,4 +236,55 @@ namespace GTAVRewardHook
         }
     };
 
+    class RanLightsTracker : IDrivingEventTracker
+    {
+        private bool runningRedLight;
+        private HashSet<Vehicle> alignedVehicles;
+
+        public RanLightsTracker(GameTrackerScript script)
+        {
+            script.Tick += Tick;
+            script.EpisodeReset += ResetEpisode;
+            alignedVehicles = new HashSet<Vehicle>();
+        }
+
+        public void Tick(object sender, EventArgs args){
+            var character = Game.Player.Character;
+            alignedVehicles.RemoveWhere(ped => ped.Position.DistanceTo(character.Position) > 30);
+            if (character.IsInVehicle())
+            {
+                var pVehicle = character.CurrentVehicle;
+
+                /* Add all vehicles that:
+                 * 1. Have a driver != player
+                 * 2. Have same heading
+                 * 3. Are behind the player
+                 */
+
+                var vehicles = new List<Vehicle>(
+                    World.GetNearbyVehicles(character.Position, 20))
+                    .FindAll(vehicle => vehicle.Driver.Exists() || vehicle.Driver != character)
+                    .FindAll(vehicle => Vector3.Dot(Utils.Heading(pVehicle), Utils.Heading(vehicle)) >= Math.Cos(20))
+                    .FindAll(vehicle => Vector3.Dot(Utils.Heading(pVehicle), (pVehicle.Position - vehicle.Position).Normalized) > Math.Cos(60));
+
+                alignedVehicles.UnionWith(vehicles);
+            }
+
+            var votes = 0;
+            foreach (var vehicle in alignedVehicles)
+                if (Function.Call<bool>(Hash.IS_VEHICLE_STOPPED_AT_TRAFFIC_LIGHTS, vehicle))
+                    votes += 1;
+
+            runningRedLight = votes > 0.7 * alignedVehicles.Count;
+
+        }
+
+        public DrivingEvent Value()
+        {
+            return runningRedLight ? DrivingEvent.RUNNING_RED_LIGHT : DrivingEvent.NONE;
+        }
+
+        public void ResetEpisode(object sender, EventArgs args) { }
+
+    }
 }

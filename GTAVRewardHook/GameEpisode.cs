@@ -34,9 +34,11 @@ namespace GTAVRewardHook
         HIT_VEHICLE,
         HIT_PEDESTRIAN,
         HIT_OTHER,
-        
-        // Not implemented
+
+        // Partial support
         RUNNING_RED_LIGHT,
+
+        // Not implemented
         DRIVING_OFFROAD,
         SCARED_NPC
     }

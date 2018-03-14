@@ -53,6 +53,7 @@ namespace GTAVRewardHook
         }
     }
 
+    // TODO replace this with a light weight database
     public class RollingTimeSeries<T>
     {
         public int HistorySize { get; private set; }

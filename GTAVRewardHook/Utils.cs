@@ -1,4 +1,5 @@
-﻿using GTA.Math;
+﻿using GTA;
+using GTA.Math;
 using GTA.Native;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,14 @@ namespace GTAVRewardHook
     // Check if props can be used
     class Utils
     {
+
+        public static Vector3 Heading(Entity entity)
+        {
+            return (0.5f * entity.ForwardVector.Normalized + 0.5f * entity.Velocity.Normalized).Normalized;
+        }
+
+        // Drawing Methods
+
         public static void DrawBox(Vector3 a, Vector3 b, Color col)
         {
             Function.Call(Hash.DRAW_BOX, a.X, a.Y, a.Z, b.X, b.Y, b.Z, col.R, col.G, col.B, col.A);
@@ -29,6 +38,8 @@ namespace GTAVRewardHook
         {
             Function.Call(Hash.DRAW_LINE, a.X, a.Y, a.Z, b.X, b.Y, b.Z, col.R, col.G, col.B, col.A);
         }
+
+        // Hashes
 
         public static List<int> TRAFFIC_SIGNAL_HASHES = new List<int> {
             0x3E2B73A4,  // prop_traffic_01a
